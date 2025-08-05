@@ -17,10 +17,14 @@ public:
 
 private:
     void setupMenu();
+    void connectActions();
     // void applyActionState(QAction* action, const MenuNode& node);
 
     QMap<QString, QAction*> actionMap_;
     QSettings settings_;
+
+signals:
+    void menuTriggered(const QString& key);  // key 来自 MenuNode.key
 };
 
 

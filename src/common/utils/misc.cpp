@@ -2,7 +2,6 @@
 
 #include "misc.h"
 #include "log.h"
-
 #include <QObject>
 #include <QDebug>
 #include <QAction>
