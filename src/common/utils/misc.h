@@ -24,7 +24,9 @@ namespace zg {
     void buildMenuBar(QMenuBar* menuBar, const QList<MenuNode>& nodes, QObject* owner,
                       QMap<QString, QAction*>& actionMap);
 
-    MenuNode parseMenuNode(const QJsonObject& obj);
+    void buildTrayMenu(QMenu* parentMenu, const QList<MenuNode>& nodes, QObject* owner,
+                       QMap<QString, QAction*>& actionMap);
+
     QList<MenuNode> parseMenuNodeList(const QJsonArray& array);
 
 
@@ -33,6 +35,11 @@ namespace zg {
 
     // 从 QSettings 读取并恢复所有 QAction 的勾选状态
     void loadCheckableStates(QSettings& settings, QMap<QString, QAction*>& actionMap);
+
+    // 文件操作
+    bool copyResourceToFile(const QString& resourcePath, const QString& targetPath);
+    // 加载JSON配置文件
+    bool loadJsonConfig(const QString& userPath, const QString& defaultPath, QJsonArray& outArray);
 
     void printMenuNode(const MenuNode& node);
 }

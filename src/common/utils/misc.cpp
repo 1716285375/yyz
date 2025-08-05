@@ -1,6 +1,7 @@
 // misc.cpp
 
 #include "misc.h"
+#include "type.h"
 #include "log.h"
 #include <QObject>
 #include <QDebug>
@@ -62,24 +63,13 @@ namespace zg {
                 if (!node.tooltip.isEmpty())
                     subMenu->setToolTip(node.tooltip);
 
-                QActionGroup* group = node.exclusive ? new QActionGroup(parentMenu) : nullptr;
-                if (group)
+                QActionGroup* group = nullptr;
+                if (node.exclusive) {
+                    group = new QActionGroup(subMenu);
                     group->setExclusive(true);
-
-                for (const auto& child : node.children) {
-                    if (child.title == "---") {
-                        subMenu->addSeparator();
-                        continue;
-                    }
-
-                    if (child.isLeaf()) {
-                        QAction* action = createAction(child, owner, group);
-                        subMenu->addAction(action);
-                        actionMap[child.key] = action;
-                    } else {
-                        buildMenu(subMenu, {child}, owner, actionMap);
-                    }
                 }
+
+                buildMenu(subMenu, node.children, owner, actionMap, group);
 
                 parentMenu->addMenu(subMenu);
             }
@@ -97,40 +87,20 @@ namespace zg {
         }
     }
 
-    MenuNode parseMenuNode(const QJsonObject& obj)
+    void buildTrayMenu(QMenu *parentMenu, const QList<MenuNode> &nodes, QObject *owner,
+                       QMap<QString, QAction *> &actionMap)
     {
-        MenuNode node;
-        node.key = obj.value("key").toString();
-        node.title = obj.value("title").toString();
-        node.shortcut = obj.value("shortcut").toString();
-
-        if (obj.contains("icon"))
-            node.icon = QIcon(obj.value("icon").toString());
-
-        if (obj.contains("checkedIcon"))
-            node.checkedIcon = QIcon(obj.value("checkedIcon").toString());
-
-        node.checkable = obj.value("checkable").toBool(false);
-        node.checked = obj.value("checked").toBool(false);
-        node.exclusive = obj.value("exclusive").toBool(false);
-
-        // ✅ 新增字段解析
-        node.enabled = obj.value("enabled").toBool(true);
-        node.tooltip = obj.value("tooltip").toString();
-
-        if (obj.contains("children") && obj["children"].isArray()) {
-            node.children = parseMenuNodeList(obj["children"].toArray());
-        }
-
-        return node;
+        // 直接调用 buildMenu，托盘菜单不需要外层单独创建子菜单
+        buildMenu(parentMenu, nodes, owner, actionMap);
     }
+
 
     QList<MenuNode> parseMenuNodeList(const QJsonArray& array)
     {
         QList<MenuNode> list;
         for (const auto& val : array) {
             if (val.isObject()) {
-                list.append(parseMenuNode(val.toObject()));
+                list.append(MenuNode::fromJson(val.toObject()));
             }
         }
         return list;
@@ -175,6 +145,76 @@ namespace zg {
                 .arg(node.exclusive)
 
             );
+    }
+
+    bool copyResourceToFile(const QString &resourcePath, const QString &targetPath)
+    {
+        // 打开资源文件
+        QFile resourceFile(resourcePath);
+        if (!resourceFile.open(QIODevice::ReadOnly)) {
+            LOG_CORE_ERROR("Failed to open resource file: {}", resourcePath.toStdString());
+            return false;
+        }
+
+        // 读取资源文件内容
+        QByteArray data = resourceFile.readAll();
+        resourceFile.close();
+
+        // 确保目标目录存在
+        QDir().mkpath(QFileInfo(targetPath).absolutePath());
+
+        // 打开目标文件
+        QFile targetFile(targetPath);
+        if (!targetFile.open(QIODevice::WriteOnly)) {
+            LOG_CORE_ERROR("Failed to open target file: {}", targetPath.toStdString());
+            return false;
+        }
+
+        // 写入目标文件
+        targetFile.write(data);
+        targetFile.close();
+
+        return true;
+    }
+
+    bool loadJsonConfig(const QString& inPath, const QString& defaultPath, QJsonArray& outArray)
+    {
+        if (!QFile::exists(inPath)) {
+            if (copyResourceToFile(defaultPath, inPath)) {
+                qInfo() << QStringLiteral("User config not found. Copied default: %1").arg(inPath);
+            } else {
+                qCritical() << QStringLiteral("Failed to copy default config: %1 -> %2").arg(defaultPath, inPath);
+                return false;
+            }
+        }
+
+        // Try to read config file
+        QFile file(inPath);
+        if (!file.open(QIODevice::ReadOnly)) {
+            LOG_CORE_ERROR("Failed to open  config file: {}", inPath.toStdString());
+            return false;
+        }
+
+        QByteArray jsonData = file.readAll();
+        file.close();
+
+        // Parse JSON with error detection
+        QJsonParseError parseError;
+        QJsonDocument doc = QJsonDocument::fromJson(jsonData, &parseError);
+
+        if (parseError.error != QJsonParseError::NoError) {
+            LOG_CORE_ERROR("Failed to parse config JSON: {}", parseError.errorString().toStdString());
+            return false;
+        }
+
+        if (!doc.isArray()) {
+            LOG_CORE_WARN("Invalid config format: expected JSON array but got {}",
+                            doc.isObject() ? "object" : doc.isNull() ? "null" : "unknown type");
+            return false;
+        }
+
+        outArray = doc.array();
+        return true;
     }
 
 }

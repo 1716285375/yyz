@@ -3,10 +3,11 @@
 #include "dock.h"
 #include "menubar.h"
 #include "log.h"
-#include <voice.h>
-#include <translate.h>
+#include "voice.h"
+#include "translate.h"
+#include "traymanager.h"
+#include "voice.h"
 
-#include <voice.h>
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -132,6 +133,11 @@ void Home::setupMenuDispatcher()
 
     menuDispatcher_["view.theme.dark"] = [this]() {
         LOG_QS_DEBUG(QString("Switch to dark theme"));
+    };
+
+    menuDispatcher_["help.about"] = [this]() {
+        LOG_QS_DEBUG(QString("help about menu item"));
+        TrayManager::instance()->showMessage("Reminder", "You have a new message!", QSystemTrayIcon::Information, 3000);
     };
 }
 
