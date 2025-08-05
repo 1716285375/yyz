@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="close.png">resources/icons/close.png</file>
+        <file alias="lock.png">resources/icons/lock.png</file>
+        <file alias="minimizi.png">resources/icons/minimize.png</file>
+        <file alias="setting.png">resources/icons/setting.png</file>
+        <file alias="unlock.png">resources/icons/unlock.png</file>
+    </qresource>
+    <qresource prefix="/qss">
+        <file alias="titlebar.qss">resources/styles/titlebar.qss</file>
+    </qresource>
+</RCC>
