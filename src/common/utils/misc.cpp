@@ -24,10 +24,10 @@ namespace zg {
     {
         QAction* action = new QAction(QObject::tr(node.title.toUtf8()), owner);
         action->setCheckable(node.checkable);
-        action->setChecked(node.checked);
         action->setEnabled(node.enabled);
         action->setShortcut(QKeySequence(node.shortcut));
         action->setIcon(node.icon);
+        action->setData(node.title);
 
         if (!node.tooltip.isEmpty())
             action->setToolTip(node.tooltip);
@@ -54,7 +54,13 @@ namespace zg {
                     parentMenu->addSeparator();
                     continue;
                 }
-                QAction* action = createAction(node, owner, nullptr);
+                QAction* action = createAction(node, owner, parentGroup);
+                if (!parentGroup) {
+                    action->setChecked(node.checked);
+                } else {
+                    if (node.checked)
+                        action->trigger();
+                }
                 parentMenu->addAction(action);
                 actionMap[node.key] = action;
             } else {

@@ -46,26 +46,27 @@ void MenuBar::connectActions()
     for (auto it = actionMap_.cbegin(); it != actionMap_.cend(); ++it) {
         const QString& key = it.key();
         QAction* action = it.value();
+        LOG_CORE_DEBUG("action: {} | ischeked: {}", action->text().toStdString(), action->isChecked());
 
-        // 加载配置中的 checked 状态（覆盖 JSON 中的默认）
-        bool shouldChecked = settings_.value(key + "/checked", action->isChecked()).toBool();
-        action->setChecked(shouldChecked);
+        // group = action->actionGroup();
+        // if (group) {
+        //     connect(action, &QActionGroup::triggered, this, [this, key, action]() {
+
+        //         emit menuTriggered(key);
+        //     });
+        // }
 
         // 连接 triggered 信号
         connect(action, &QAction::triggered, this, [this, key, action]() {
-            // 存储当前状态（仅当 checkable）
-            if (action->isCheckable()) {
-                settings_.setValue(key + "/checked", action->isChecked());
-            }
 
             emit menuTriggered(key);
         });
 
         // 可选：初始为 checked 的 action，触发一次
-        if (shouldChecked) {
-            QTimer::singleShot(0, this, [this, key]() {
-                emit menuTriggered(key);
-            });
-        }
+        // if (action->isCheckable() && action->isChecked()) {
+        //     QTimer::singleShot(0, this, [this, key, action]() {
+        //         emit menuTriggered(key);
+        //     });
+        // }
     }
 }

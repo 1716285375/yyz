@@ -1,3 +1,9 @@
 [submodule "thirdparty/spdlog"]
 	path = thirdparty/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "thirdparty/protobuf"]
+	path = thirdparty/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "thirdparty/zlib"]
+	path = thirdparty/zlib
+	url = https://github.com/madler/zlib.git
